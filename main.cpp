@@ -85,7 +85,7 @@ bool menuBazy(vector<Osoba> &kontener, int nrZalogowanegoUzytkownika)
 {
     char c;
     system("cls");
-    cout <<"Uzytkownik:" << nrZalogowanegoUzytkownika<<endl;
+    cout <<"Zalogowano jako Uzytkownik nr:" << nrZalogowanegoUzytkownika<<endl;
     cout << "--------------------------------------------------"<< endl;
     cout << "MENU:"<< endl;
     cout << "Dodaj Adresata (d)"<<endl;
@@ -126,6 +126,7 @@ bool menuBazy(vector<Osoba> &kontener, int nrZalogowanegoUzytkownika)
         return true;
         break;
     case 'z':
+        zapiszDoPliku_PodmianaPlikow(kontener, nrZalogowanegoUzytkownika);
         return false;
         break;
     default:
@@ -169,15 +170,34 @@ bool dodajDane(int id_Uzytkownika, string imie, string nazwisko, string telefon,
 }
 void edytujDane(vector<Osoba> &kontener, int nrZalogowanegoUzytkownika)
 {
+    bool znalezionoID = false;
     int id;
     char c;
     system("cls");
     cout << "ID Rekordu: ";
     cin >> id;
-    cout << "Edytuj Imie (i), Nazwisko (n), telefon (t), mail (m), adres (a), powrot (p)"<<endl;
-    c = _getch();
-    edytujRekord(kontener,id,c);
-    zapiszDoPliku_PodmianaPlikow(kontener, nrZalogowanegoUzytkownika);
+    for (vector<Osoba>::iterator i = kontener.begin(); i != kontener.end(); ++i)
+        {
+            if((*i).id==id)
+            {
+                znalezionoID = true;
+                wypiszRekord(i);
+            }
+        }
+        cout<< endl;
+    if(znalezionoID)
+    {
+        cout << "Edytuj Imie (i), Nazwisko (n), telefon (t), mail (m), adres (a), powrot (p)"<<endl;
+        c = _getch();
+        edytujRekord(kontener,id,c);
+    }
+    else
+    if (!znalezionoID)
+    {
+        cout << "Podany numer rekordu nie istnieje. Nacisnij dowolny klawisz aby powrocic do menu."<<endl;
+        c = _getch();
+    }
+
 }
 void edytujRekord(vector<Osoba> &kontener, int id, char opcja)
 {
@@ -186,27 +206,8 @@ void edytujRekord(vector<Osoba> &kontener, int id, char opcja)
     {
         for (vector<Osoba>::iterator i = kontener.begin(); i != kontener.end(); ++i)
         {
-            if((*i).id==id) //nale¿y doda warunek w razie gdy nie ma takiego id rekordu dla wybranego u¿ytkownika
+            if((*i).id==id)
             {
-                cout <<"Stara wartosc: ";
-                switch (opcja)
-                {
-                case 'i':
-                    cout << (*i).imie << endl;
-                    break;
-                case 'n':
-                    cout << (*i).nazwisko << endl;
-                    break;
-                case 't':
-                    cout << (*i).telefon << endl;
-                    break;
-                case 'm':
-                    cout << (*i).email << endl;
-                    break;
-                case 'a':
-                    cout << (*i).adres << endl;
-                    break;
-                }
                 cout << "Nowa wartosc: ";
                 cin >> noweDane;
                 switch (opcja)
@@ -257,14 +258,13 @@ int logowanieUzytkownika(vector<Uzytkownik> kontener)
                 break;
             }
         }
-        if (zalogowano == true) cout << "Zalogowales sie. Nacisnij dowolny klawisz."<<endl;
-        if (zalogowano == false)
+        if (zalogowano); //jesli zalogowano to jest powrot do menu. Informacja o zalogowaniu jest wyswietlona w menu.
+        if (!zalogowano) //jesli nie zalogowano to wyswietlana jest informacja
         {
             cout << "Podano bledny login lub haslo. Nacisnij dowolny klawisz."<<endl;
             rekord.id_Uzytkownika = 0;
+            char c = _getch();
         }
-
-        char c = _getch();
         return rekord.id_Uzytkownika;
 }
 bool rejestracjaUzytkownika(vector<Uzytkownik> &kontener)
@@ -300,6 +300,8 @@ bool rejestracjaUzytkownika(vector<Uzytkownik> &kontener)
     if (kontener.size()==0)
         daneLogowania.id_Uzytkownika = 1;
     kontener.push_back(daneLogowania);
+    cout << "Utworzono nowego uzytkownika.";
+    char c = _getch();
     return true;
 }
 void usunDane(vector<Osoba> &kontener, int nrZalogowanegoUzytkownika)
@@ -330,7 +332,6 @@ void usunDane(vector<Osoba> &kontener, int nrZalogowanegoUzytkownika)
                 {
                     kontener.erase(i);
                     cout <<"Usunieto rekord" <<endl;
-                    zapiszDoPliku_PodmianaPlikow(kontener, nrZalogowanegoUzytkownika);
                 }
                 if (c =='n')
                     cout << "Zrezygnowales" << endl;
@@ -407,10 +408,11 @@ int wczytajPlik(vector<Osoba> &kontener, int id_Uzytkownika)
 }
 int wczytajPlikUzytkownikow(vector<Uzytkownik> &kontener)
 {
+    const string nazwaPliku = "Uzytkownicy.txt";
     Uzytkownik rekord;
     fstream newfile;
     kontener.clear();
-    newfile.open("Uzytkownicy.txt",ios::in); //open a file to perform read operation using file object
+    newfile.open(nazwaPliku,ios::in); //open a file to perform read operation using file object
     if (newfile.is_open())    //checking whether the file is open
     {
         string fragmentTekstu;
@@ -437,7 +439,7 @@ int wczytajPlikUzytkownikow(vector<Uzytkownik> &kontener)
         }
 
         newfile.close(); //close the file object.
-        cout <<"Wczytano dane adresowe z pliku Uzytkownicy."<<endl;
+        cout <<"Wczytano dane adresowe z pliku " + nazwaPliku+"."<<endl;
         return rekord.id_Uzytkownika; //funkcja zwraca liczbe id ostatniego rekordu
     }
     else
@@ -469,12 +471,12 @@ void wpiszNowyRekord(vector<Osoba> &kontener, int nrZalogowanegoUzytkownika)
 }
 void wypiszRekord(std::vector<Osoba>::const_iterator i)
 {
-            cout << (*i).id << endl;
-            cout << (*i).imie << endl;
-            cout << (*i).nazwisko << endl;
-            cout << (*i).telefon << endl;
-            cout << (*i).email << endl;
-            cout << (*i).adres << endl;
+            cout << "Id: "<<(*i).id << endl;
+            cout << "Imie: "<<(*i).imie << endl;
+            cout << "Nazwisko: "<<(*i).nazwisko << endl;
+            cout << "Telefon: "<<(*i).telefon << endl;
+            cout << "Email: "<<(*i).email << endl;
+            cout << "Adres: "<<(*i).adres << endl;
 }
 void wypiszWszystkieDane(vector<Osoba> kontener)
 {
@@ -499,6 +501,7 @@ void wypiszWszystkieDane(vector<Osoba> kontener)
 }
 void wyszukajImie(vector <Osoba> kontener)
 {
+    bool znaleziono = false;
     system("cls");
     if (!kontener.empty())
     {
@@ -510,10 +513,12 @@ void wyszukajImie(vector <Osoba> kontener)
         {
             if((*i).imie==imie)
             {
+                znaleziono = true;
                 wypiszRekord(i);
             }
             cout << endl;
         }
+        if (!znaleziono) cout <<"Nie znaleziono rekordu o tym Imieniu.";
         cout << endl;
     }
     else
@@ -525,6 +530,7 @@ void wyszukajImie(vector <Osoba> kontener)
 }
 void wyszukajNazwisko(vector <Osoba> kontener)
 {
+    bool znaleziono = false;
     system("cls");
     if (!kontener.empty())
     {
@@ -535,10 +541,12 @@ void wyszukajNazwisko(vector <Osoba> kontener)
         {
             if((*i).nazwisko==nazwisko)
             {
+                znaleziono = true;
                 wypiszRekord(i);
             }
             cout << endl;
         }
+        if (!znaleziono) cout << "Nie znaleziono rekordu o tym nazwisku.";
         cout << endl;
     }
     else
@@ -620,7 +628,7 @@ bool zapiszDoPliku_PodmianaPlikow(vector<Osoba> kontener, int id_Uzytkownika)
             case 6:
                 rekord.adres = fragmentTekstu;
                 i=0;
-                if (rekord.id_Uzytkownika == id_Uzytkownika) // jesli rekord z pliku ma to samo id co id uzytkownika to sprawdza poprawnosc
+                if ((rekord.id_Uzytkownika == id_Uzytkownika) && (!kontener.empty())) // jesli rekord z pliku ma to samo id co id uzytkownika to sprawdza poprawnosc
                 {
                     if ((*iteracja).id==rekord.id) //jesli dla rekordu z pliku nie istnieje takie samo id rekordu w kontenerze to nic nie jest przepisywane
                     {
